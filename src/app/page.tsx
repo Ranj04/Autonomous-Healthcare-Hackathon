@@ -79,14 +79,14 @@ export default function Home() {
   }
 
   return (
-    <main className="flex flex-1 items-center justify-center px-6 py-16">
+    <main className="flex flex-1 items-center justify-center px-6 py-16 max-md:px-5 max-md:pt-10 max-md:pb-[calc(6rem+env(safe-area-inset-bottom))]">
       <div className="w-full max-w-xl">
         {/* Masthead */}
         <header className="rise" style={{ animationDelay: "0ms" }}>
           <p className="font-mono text-[11px] uppercase tracking-[0.32em] text-accent">
             Case File — Patient Advocacy
           </p>
-          <h1 className="mt-3 font-display text-6xl font-light leading-[0.95] tracking-tight text-ink">
+          <h1 className="mt-3 font-display text-6xl font-light leading-[0.95] tracking-tight text-ink max-md:text-5xl">
             Paperwork
             <br />
             <span className="italic">Advocate</span>
@@ -99,7 +99,7 @@ export default function Home() {
 
         {/* The intake form */}
         <div
-          className="rise mt-10 border border-line bg-paper-raised p-7 shadow-[6px_6px_0_0_rgba(33,28,24,0.08)]"
+          className="rise mt-10 border border-line bg-paper-raised p-7 shadow-[6px_6px_0_0_rgba(33,28,24,0.08)] max-md:p-6"
           style={{ animationDelay: "120ms" }}
         >
           <div className="space-y-6">
@@ -197,7 +197,8 @@ export default function Home() {
               </p>
             </div>
 
-            <table className="mt-5 w-full font-mono text-sm">
+            <div className="mt-5 overflow-x-auto [-webkit-overflow-scrolling:touch]">
+            <table className="w-full font-mono text-sm max-md:min-w-[26rem]">
               <thead>
                 <tr className="border-b border-ink text-left text-[11px] uppercase tracking-[0.15em] text-ink-soft">
                   <th className="py-2 pr-3 font-medium">CPT</th>
@@ -244,6 +245,7 @@ export default function Home() {
                 ))}
               </tbody>
             </table>
+            </div>
               </>
             )}
           </div>
@@ -272,7 +274,8 @@ export default function Home() {
             <p className="mt-5 font-mono text-[11px] uppercase tracking-[0.2em] text-ink-soft">
               Medication schedule
             </p>
-            <table className="mt-2 w-full font-mono text-sm">
+            <div className="mt-2 overflow-x-auto [-webkit-overflow-scrolling:touch]">
+            <table className="w-full font-mono text-sm max-md:min-w-[22rem]">
               <tbody className="divide-y divide-line">
                 {result.schedule.meds.map((m, i) => (
                   <tr key={i}>
@@ -288,6 +291,7 @@ export default function Home() {
                 ))}
               </tbody>
             </table>
+            </div>
 
             {/* Warning signs */}
             {result.parsed.warning_signs.length > 0 && (
@@ -325,7 +329,7 @@ export default function Home() {
                 <button
                   key={m}
                   onClick={() => setMode(m)}
-                  className={`flex flex-1 items-center justify-center gap-2 px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.2em] transition-all ${
+                  className={`flex flex-1 items-center justify-center gap-2 px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.2em] transition-all max-md:min-h-[44px] ${
                     mode === m
                       ? "bg-ink text-paper"
                       : "text-ink-soft hover:text-ink"
@@ -395,7 +399,7 @@ export default function Home() {
             )}
             {appeal.status === "ready" && (
               <>
-                <pre className="mt-3 max-h-96 overflow-y-auto whitespace-pre-wrap border border-line bg-paper p-4 font-mono text-sm leading-relaxed text-ink">
+                <pre className="mt-3 max-h-96 overflow-y-auto whitespace-pre-wrap break-words border border-line bg-paper p-4 font-mono text-sm leading-relaxed text-ink [-webkit-overflow-scrolling:touch] max-md:max-h-[55vh]">
                   {appeal.letter}
                 </pre>
                 <button
@@ -425,7 +429,7 @@ export default function Home() {
             )}
             {summary.status === "ready" && (
               <>
-                <pre className="mt-3 max-h-96 overflow-y-auto whitespace-pre-wrap border border-line bg-paper p-4 font-mono text-sm leading-relaxed text-ink">
+                <pre className="mt-3 max-h-96 overflow-y-auto whitespace-pre-wrap break-words border border-line bg-paper p-4 font-mono text-sm leading-relaxed text-ink [-webkit-overflow-scrolling:touch] max-md:max-h-[55vh]">
                   {summary.summary}
                 </pre>
                 <button

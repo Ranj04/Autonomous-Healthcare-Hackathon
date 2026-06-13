@@ -91,12 +91,24 @@ export async function xaiChat(systemText: string, userText: string): Promise<str
   return extractText(await res.json());
 }
 
-// Models sometimes wrap JSON in ```json fences; strip them and parse.
+// Models sometimes wrap JSON in ```json fences, or add a stray sentence before
+// or after it. Strip fences first; if that still won't parse, fall back to the
+// outermost {...} / [...] span so incidental prose doesn't 500 the request.
 export function parseJsonFromModel<T>(text: string): T {
   const cleaned = text
     .trim()
     .replace(/^```(?:json)?/i, "")
     .replace(/```$/, "")
     .trim();
-  return JSON.parse(cleaned) as T;
+  try {
+    return JSON.parse(cleaned) as T;
+  } catch {
+    const start = cleaned.search(/[[{]/);
+    const open = cleaned[start];
+    const end = cleaned.lastIndexOf(open === "{" ? "}" : "]");
+    if (start !== -1 && end > start) {
+      return JSON.parse(cleaned.slice(start, end + 1)) as T;
+    }
+    throw new Error("Could not parse JSON from model response");
+  }
 }

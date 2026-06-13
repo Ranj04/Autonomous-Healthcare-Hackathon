@@ -20,13 +20,15 @@ export default function HowItWorks() {
 
   return (
     <>
-      {/* Edge tab */}
+      {/* Edge tab — vertical on the right edge on desktop; on mobile it would
+          overlap the centered column and the talk button, so it becomes a
+          compact button pinned to the bottom-right (clear of the home bar). */}
       <button
         type="button"
         aria-label="How this works"
         aria-expanded={open}
         onClick={() => setOpen(true)}
-        className="fixed right-0 top-1/2 z-40 flex -translate-y-1/2 flex-col items-center gap-1 border border-r-0 border-line bg-paper-raised px-2.5 py-4 font-mono text-[11px] uppercase tracking-[0.2em] text-ink-soft shadow-[-3px_3px_0_0_rgba(33,28,24,0.08)] transition-colors hover:bg-accent hover:text-paper hover:border-accent"
+        className="fixed z-40 flex items-center gap-1 border border-line bg-paper-raised font-mono text-[11px] uppercase tracking-[0.2em] text-ink-soft transition-colors hover:bg-accent hover:text-paper hover:border-accent right-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] flex-row px-3 py-2 shadow-[2px_2px_0_0_rgba(33,28,24,0.12)] max-md:min-h-[44px] md:right-0 md:top-1/2 md:bottom-auto md:-translate-y-1/2 md:flex-col md:border-r-0 md:px-2.5 md:py-4 md:shadow-[-3px_3px_0_0_rgba(33,28,24,0.08)]"
       >
         <span>How</span>
         <span>it</span>
@@ -48,7 +50,7 @@ export default function HowItWorks() {
         role="dialog"
         aria-modal="true"
         aria-label="How this works"
-        className={`fixed right-0 top-0 z-50 flex h-full w-[340px] max-w-[88vw] flex-col border-l border-line bg-paper-raised shadow-[-8px_0_24px_0_rgba(33,28,24,0.12)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+        className={`fixed right-0 top-0 z-50 flex h-full w-[340px] max-w-[88vw] flex-col border-l border-line bg-paper-raised shadow-[-8px_0_24px_0_rgba(33,28,24,0.12)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] max-md:w-[92vw] max-md:max-w-[92vw] max-md:pt-[env(safe-area-inset-top)] ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -66,13 +68,13 @@ export default function HowItWorks() {
             type="button"
             aria-label="Close"
             onClick={() => setOpen(false)}
-            className="-mr-1 -mt-1 border border-line bg-paper px-2.5 py-1 font-mono text-sm text-ink-soft transition-colors hover:bg-accent hover:text-paper hover:border-accent"
+            className="-mr-1 -mt-1 flex items-center justify-center border border-line bg-paper px-2.5 py-1 font-mono text-sm text-ink-soft transition-colors hover:bg-accent hover:text-paper hover:border-accent max-md:min-h-[44px] max-md:min-w-[44px]"
           >
             ✕
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-6 font-mono text-sm leading-relaxed text-ink-soft">
+        <div className="flex-1 overflow-y-auto px-6 py-6 font-mono text-sm leading-relaxed text-ink-soft [-webkit-overflow-scrolling:touch] max-md:pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
           <p className="text-ink">
             Medical paperwork is confusing. This app helps you understand it —
             and actually do something about it — just by talking.
