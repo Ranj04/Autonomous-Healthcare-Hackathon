@@ -155,9 +155,15 @@ export default function Home() {
             style={{ animationDelay: "0ms" }}
           >
             <div className="flex items-baseline justify-between">
-              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-seal">
-                ✓ Bill read — {result.analysis.lines.length} line items
-              </p>
+              {result.analysis.lines.length === 0 ? (
+                <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent-deep">
+                  No billed line items found
+                </p>
+              ) : (
+                <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-seal">
+                  ✓ Bill read — {result.analysis.lines.length} line items
+                </p>
+              )}
               {result.parsed.service_date && (
                 <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-ink-soft">
                   {result.parsed.service_date}
@@ -168,11 +174,21 @@ export default function Home() {
               {result.received}
             </p>
 
-            {/* Overcharge tally */}
-            <div className="mt-5 border border-accent/40 bg-accent/5 p-4">
-              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent-deep">
-                Estimated overcharge
-              </p>
+            {result.analysis.lines.length === 0 ? (
+              <div className="mt-5 border-l-2 border-accent bg-paper px-4 py-3 font-mono text-sm leading-relaxed text-ink-soft">
+                We couldn&apos;t find any billed line items on this document. If
+                this is a discharge or after-visit summary, change{" "}
+                <span className="text-ink">01 — Document type</span> to{" "}
+                <span className="text-ink">“Discharge instructions”</span> and
+                upload again.
+              </div>
+            ) : (
+              <>
+                {/* Overcharge tally */}
+                <div className="mt-5 border border-accent/40 bg-accent/5 p-4">
+                  <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent-deep">
+                    Estimated overcharge
+                  </p>
               <p className="mt-1 font-display text-4xl text-accent-deep">
                 ${money(result.analysis.total_overcharge)}
               </p>
@@ -228,6 +244,8 @@ export default function Home() {
                 ))}
               </tbody>
             </table>
+              </>
+            )}
           </div>
         )}
 
@@ -299,7 +317,8 @@ export default function Home() {
         )}
 
         {/* Advocate — Talk (voice) or Type (text); both share session state */}
-        {result && (
+        {result &&
+          (result.docType === "discharge" || result.analysis.lines.length > 0) && (
           <>
             <div className="rise mt-6 flex border border-line bg-paper-raised p-1">
               {(["talk", "type"] as Mode[]).map((m) => (
