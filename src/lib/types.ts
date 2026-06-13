@@ -39,3 +39,30 @@ export type BillAnalysis = {
   total_billed: number;
   total_overcharge: number;
 };
+
+// ----- discharge parsing + schedule (Phase 7) -----
+
+export type DischargeMedication = {
+  name: string;
+  frequency_per_day: number;
+  duration: string;
+};
+
+export type DischargeParse = {
+  diagnosis: string;
+  medications: DischargeMedication[];
+  follow_ups: string[];
+  warning_signs: string[];
+  activity_restrictions: string[];
+};
+
+export type ScheduledMed = {
+  name: string;
+  duration: string;
+  as_needed: boolean;
+  times: string[]; // time-of-day slots, e.g. ["8:00 AM", "8:00 PM"]
+};
+
+export type MedSchedule = {
+  meds: ScheduledMed[];
+};

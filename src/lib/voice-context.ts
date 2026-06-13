@@ -1,4 +1,9 @@
-import type { BillAnalysis, BillParse, DocType } from "@/lib/types";
+import type {
+  BillAnalysis,
+  BillParse,
+  DischargeParse,
+  DocType,
+} from "@/lib/types";
 
 export const VOICE_MODEL = "grok-voice-think-fast-1.0";
 export const VOICE_NAME = "ara"; // warm female — calm patient advocate
@@ -88,17 +93,50 @@ const DRAFT_APPEAL_TOOL: RealtimeTool = {
   parameters: { type: "object", properties: {} },
 };
 
-// docType-keyed. Only "bill" is wired now; "discharge" lands in Phase 7.
+// Verbatim discharge health-navigator system prompt (from the brief).
+const DISCHARGE_SYSTEM_PROMPT = `You are a calm, plain-spoken health navigator. You help a patient
+understand discharge / after-visit instructions they already received.
+
+You are given the parsed instructions: diagnosis, medications, follow-ups,
+warning signs, and activity restrictions. Rules:
+- Explain only what is in the provided document. Do NOT add new medical
+  advice, new medications, or dosages that aren't in the document.
+- If asked something the document doesn't cover, say so and suggest they
+  contact their care provider. Never improvise clinical guidance.
+- Plain language, no jargon without a plain definition.
+- Respond in the language the user speaks to you in; switch if they switch.
+- When asked, call the generate_summary tool to produce a medication
+  schedule and a short list of questions for the follow-up visit.`;
+
+function dischargeContext(parse: DischargeParse): string {
+  return JSON.stringify(parse, null, 2);
+}
+
+const GENERATE_SUMMARY_TOOL: RealtimeTool = {
+  type: "function",
+  name: "generate_summary",
+  description:
+    "Produce a plain-language medication schedule and a short list of questions for the patient's follow-up visit. Call this when the patient asks for a summary, a schedule, or questions to ask their doctor. Takes no arguments.",
+  parameters: { type: "object", properties: {} },
+};
+
+// docType-keyed session: bill and discharge share the shell; only the prompt,
+// injected context, and tools differ.
 export function buildVoiceSession(
   docType: DocType,
-  parse: BillParse,
-  analysis: BillAnalysis,
+  parse: BillParse | DischargeParse,
+  ctx: { analysis?: BillAnalysis },
 ): { instructions: string; tools: RealtimeTool[] } {
   if (docType === "bill") {
+    const bill = parse as BillParse;
     return {
-      instructions: `${BILL_SYSTEM_PROMPT}\n\n=== PATIENT'S BILL ===\n${billContext(parse, analysis)}`,
+      instructions: `${BILL_SYSTEM_PROMPT}\n\n=== PATIENT'S BILL ===\n${billContext(bill, ctx.analysis!)}`,
       tools: [MARK_DISPUTED_TOOL, DRAFT_APPEAL_TOOL],
     };
   }
-  throw new Error(`Voice session for docType "${docType}" not implemented yet`);
+  const discharge = parse as DischargeParse;
+  return {
+    instructions: `${DISCHARGE_SYSTEM_PROMPT}\n\n=== PATIENT'S DISCHARGE INSTRUCTIONS ===\n${dischargeContext(discharge)}`,
+    tools: [GENERATE_SUMMARY_TOOL],
+  };
 }

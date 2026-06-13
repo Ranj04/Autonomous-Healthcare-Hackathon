@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { BillAnalysis, BillParse, DocType } from "@/lib/types";
+import type {
+  BillAnalysis,
+  BillParse,
+  DischargeParse,
+  DocType,
+} from "@/lib/types";
 import { buildVoiceSession } from "@/lib/voice-context";
 import { XAI_CHAT_MODEL } from "@/lib/xai";
 
@@ -19,12 +24,12 @@ export async function POST(req: NextRequest) {
   try {
     const { docType, parse, analysis, input } = (await req.json()) as {
       docType: DocType;
-      parse: BillParse;
-      analysis: BillAnalysis;
+      parse: BillParse | DischargeParse;
+      analysis?: BillAnalysis;
       input: unknown[];
     };
 
-    const { instructions, tools } = buildVoiceSession(docType, parse, analysis);
+    const { instructions, tools } = buildVoiceSession(docType, parse, { analysis });
 
     const res = await fetch("https://api.x.ai/v1/responses", {
       method: "POST",

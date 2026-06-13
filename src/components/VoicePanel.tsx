@@ -1,7 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { BillAnalysis, BillParse, DocType } from "@/lib/types";
+import type {
+  BillAnalysis,
+  BillParse,
+  DischargeParse,
+  DocType,
+  MedSchedule,
+} from "@/lib/types";
 import {
   buildVoiceSession,
   VOICE_MODEL,
@@ -9,6 +15,7 @@ import {
 } from "@/lib/voice-context";
 import { floatToPcm16Base64, PcmPlayer, SAMPLE_RATE } from "@/lib/audio";
 import { runDraftAppeal } from "@/lib/appeal-client";
+import { runGenerateSummary } from "@/lib/summary-client";
 
 type Status = "idle" | "connecting" | "connected" | "error";
 type Turn = { role: "user" | "agent"; text: string };
@@ -36,20 +43,28 @@ export type AppealState =
   | { status: "ready"; letter: string }
   | { status: "error"; error: string };
 
+export type SummaryState =
+  | { status: "drafting" }
+  | { status: "ready"; summary: string }
+  | { status: "error"; error: string };
+
 export default function VoicePanel({
   docType,
   parse,
   analysis,
-  disputedIds,
+  disputedIds = [],
   onMarkDisputed,
   onAppeal,
+  onSummary,
 }: {
   docType: DocType;
-  parse: BillParse;
-  analysis: BillAnalysis;
-  disputedIds: number[];
-  onMarkDisputed: (lineId: number) => void;
-  onAppeal: (state: AppealState) => void;
+  parse: BillParse | DischargeParse;
+  analysis?: BillAnalysis;
+  schedule?: MedSchedule;
+  disputedIds?: number[];
+  onMarkDisputed?: (lineId: number) => void;
+  onAppeal?: (state: AppealState) => void;
+  onSummary?: (state: SummaryState) => void;
 }) {
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -76,14 +91,22 @@ export default function VoicePanel({
 
   const send = (msg: unknown) => wsRef.current?.send(JSON.stringify(msg));
 
-  const draftAppeal = () =>
+  const draftAppeal = () => {
+    const bill = parse as BillParse;
+    if (!analysis || !onAppeal) return;
     runDraftAppeal({
       analysis,
-      service_date: parse.service_date,
+      service_date: bill.service_date,
       disputedIds: disputedIdsRef.current,
-      patient_name: parse.patient_name,
+      patient_name: bill.patient_name,
       onAppeal,
     });
+  };
+
+  const generateSummary = () => {
+    if (!onSummary) return;
+    runGenerateSummary({ parse: parse as DischargeParse, onSummary });
+  };
 
   const appendAgentText = (delta: string) => {
     agentTurnRef.current += delta;
@@ -141,7 +164,7 @@ export default function VoicePanel({
         let output: unknown = { ok: true };
 
         if (name === "mark_disputed" && typeof args.line_id === "number") {
-          onMarkDisputed(args.line_id);
+          onMarkDisputed?.(args.line_id);
           output = { ok: true, line_id: args.line_id, status: "marked_disputed" };
         } else if (name === "draft_appeal") {
           draftAppeal(); // async; renders on screen when ready
@@ -150,6 +173,14 @@ export default function VoicePanel({
             status: "drafting",
             message:
               "The appeal letter is being prepared and will appear on the patient's screen.",
+          };
+        } else if (name === "generate_summary") {
+          generateSummary(); // async; renders on screen when ready
+          output = {
+            ok: true,
+            status: "drafting",
+            message:
+              "The medication schedule and questions are being prepared and will appear on the patient's screen.",
           };
         } else {
           output = { ok: false, error: `tool ${name} not available` };
@@ -198,7 +229,9 @@ export default function VoicePanel({
       wsRef.current = ws;
 
       ws.onopen = () => {
-        const { instructions, tools } = buildVoiceSession(docType, parse, analysis);
+        const { instructions, tools } = buildVoiceSession(docType, parse, {
+          analysis,
+        });
         send({
           type: "session.update",
           session: {
@@ -349,8 +382,8 @@ export default function VoicePanel({
         </div>
       )}
 
-      {/* Disputed lines */}
-      {disputedIds.length > 0 && (
+      {/* Disputed lines (bill only) */}
+      {analysis && disputedIds.length > 0 && (
         <div className="mt-5 border-t border-line pt-4">
           <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent-deep">
             Marked as not recalled ({disputedIds.length})

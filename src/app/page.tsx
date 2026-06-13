@@ -5,20 +5,30 @@ import {
   DOC_TYPES,
   type BillAnalysis,
   type BillParse,
+  type DischargeParse,
   type DocType,
+  type MedSchedule,
 } from "@/lib/types";
-import VoicePanel, { type AppealState } from "@/components/VoicePanel";
+import VoicePanel, {
+  type AppealState,
+  type SummaryState,
+} from "@/components/VoicePanel";
 import TextPanel from "@/components/TextPanel";
 
 type Mode = "talk" | "type";
 
-type UploadResult = {
-  received: string;
-  bytes: number;
-  docType: DocType;
+type Meta = { received: string; bytes: number };
+type BillResult = Meta & {
+  docType: "bill";
   parsed: BillParse;
   analysis: BillAnalysis;
 };
+type DischargeResult = Meta & {
+  docType: "discharge";
+  parsed: DischargeParse;
+  schedule: MedSchedule;
+};
+type UploadResult = BillResult | DischargeResult;
 
 const money = (n: number) =>
   n.toLocaleString(undefined, {
@@ -34,6 +44,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [disputedIds, setDisputedIds] = useState<number[]>([]);
   const [appeal, setAppeal] = useState<AppealState | null>(null);
+  const [summary, setSummary] = useState<SummaryState | null>(null);
   const [mode, setMode] = useState<Mode>("talk"); // default to voice (Talk)
 
   async function handleUpload() {
@@ -43,19 +54,23 @@ export default function Home() {
     setResult(null);
     setDisputedIds([]);
     setAppeal(null);
+    setSummary(null);
     try {
       const form = new FormData();
       form.append("file", file);
       form.append("docType", docType);
       const res = await fetch("/api/upload", { method: "POST", body: form });
-      const data = (await res.json()) as UploadResult & { error?: string };
+      const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error ?? `Server returned ${res.status}`);
       }
-      if (!Array.isArray(data.parsed?.line_items)) {
+      if (docType === "bill" && !Array.isArray(data.parsed?.line_items)) {
         throw new Error("Server returned no bill line items");
       }
-      setResult(data);
+      if (docType === "discharge" && !Array.isArray(data.parsed?.medications)) {
+        throw new Error("Server returned no discharge instructions");
+      }
+      setResult(data as UploadResult);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Upload failed");
     } finally {
@@ -133,8 +148,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Overcharge audit */}
-        {result?.analysis && (
+        {/* Overcharge audit (bill) */}
+        {result?.docType === "bill" && (
           <div
             className="rise mt-6 border border-line bg-paper-raised p-6"
             style={{ animationDelay: "0ms" }}
@@ -216,8 +231,75 @@ export default function Home() {
           </div>
         )}
 
+        {/* Discharge instructions */}
+        {result?.docType === "discharge" && (
+          <div className="rise mt-6 border border-line bg-paper-raised p-6">
+            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-seal">
+              ✓ Discharge read — {result.schedule.meds.length} medications
+            </p>
+            <p className="mt-1 font-mono text-[11px] text-ink-soft">
+              {result.received}
+            </p>
+
+            <div className="mt-5 border border-line bg-paper p-4">
+              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-ink-soft">
+                Diagnosis
+              </p>
+              <p className="mt-1 font-display text-2xl text-ink">
+                {result.parsed.diagnosis}
+              </p>
+            </div>
+
+            {/* Medication schedule */}
+            <p className="mt-5 font-mono text-[11px] uppercase tracking-[0.2em] text-ink-soft">
+              Medication schedule
+            </p>
+            <table className="mt-2 w-full font-mono text-sm">
+              <tbody className="divide-y divide-line">
+                {result.schedule.meds.map((m, i) => (
+                  <tr key={i}>
+                    <td className="py-2.5 pr-3 align-top text-ink">{m.name}</td>
+                    <td className="py-2.5 pl-3 text-right align-top text-ink-soft">
+                      {m.as_needed
+                        ? `As needed · up to ${m.times.length}×/day`
+                        : m.times.join(" · ")}
+                      <br />
+                      <span className="text-[11px]">{m.duration}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* Warning signs */}
+            {result.parsed.warning_signs.length > 0 && (
+              <div className="mt-5 border border-accent/40 bg-accent/5 p-4">
+                <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent-deep">
+                  Seek care / call 911 if
+                </p>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-ink">
+                  {result.parsed.warning_signs.map((w, i) => (
+                    <li key={i}>{w}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Follow-ups + activity */}
+            {result.parsed.follow_ups.length > 0 && (
+              <DischargeList title="Follow-up" items={result.parsed.follow_ups} />
+            )}
+            {result.parsed.activity_restrictions.length > 0 && (
+              <DischargeList
+                title="Activity & home care"
+                items={result.parsed.activity_restrictions}
+              />
+            )}
+          </div>
+        )}
+
         {/* Advocate — Talk (voice) or Type (text); both share session state */}
-        {result?.analysis && (
+        {result && (
           <>
             <div className="rise mt-6 flex border border-line bg-paper-raised p-1">
               {(["talk", "type"] as Mode[]).map((m) => (
@@ -244,7 +326,10 @@ export default function Home() {
               <VoicePanel
                 docType={result.docType}
                 parse={result.parsed}
-                analysis={result.analysis}
+                analysis={result.docType === "bill" ? result.analysis : undefined}
+                schedule={
+                  result.docType === "discharge" ? result.schedule : undefined
+                }
                 disputedIds={disputedIds}
                 onMarkDisputed={(lineId) =>
                   setDisputedIds((prev) =>
@@ -252,12 +337,16 @@ export default function Home() {
                   )
                 }
                 onAppeal={setAppeal}
+                onSummary={setSummary}
               />
             ) : (
               <TextPanel
                 docType={result.docType}
                 parse={result.parsed}
-                analysis={result.analysis}
+                analysis={result.docType === "bill" ? result.analysis : undefined}
+                schedule={
+                  result.docType === "discharge" ? result.schedule : undefined
+                }
                 disputedIds={disputedIds}
                 onMarkDisputed={(lineId) =>
                   setDisputedIds((prev) =>
@@ -265,6 +354,7 @@ export default function Home() {
                   )
                 }
                 onAppeal={setAppeal}
+                onSummary={setSummary}
               />
             )}
           </>
@@ -299,8 +389,55 @@ export default function Home() {
             )}
           </div>
         )}
+
+        {/* Visit summary (discharge) */}
+        {summary && (
+          <div className="rise mt-6 border border-line bg-paper-raised p-6">
+            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-seal">
+              After-visit summary
+            </p>
+            {summary.status === "drafting" && (
+              <p className="mt-3 font-mono text-sm text-ink-soft">Preparing…</p>
+            )}
+            {summary.status === "error" && (
+              <p className="mt-3 border-l-2 border-accent bg-paper px-3 py-2 font-mono text-sm text-accent-deep">
+                {summary.error}
+              </p>
+            )}
+            {summary.status === "ready" && (
+              <>
+                <pre className="mt-3 max-h-96 overflow-y-auto whitespace-pre-wrap border border-line bg-paper p-4 font-mono text-sm leading-relaxed text-ink">
+                  {summary.summary}
+                </pre>
+                <button
+                  onClick={() =>
+                    downloadPdf("after-visit-summary.pdf", summary.summary)
+                  }
+                  className="mt-4 bg-ink px-4 py-2.5 font-mono text-xs uppercase tracking-[0.2em] text-paper transition-all hover:bg-accent"
+                >
+                  Download PDF ↓
+                </button>
+              </>
+            )}
+          </div>
+        )}
       </div>
     </main>
+  );
+}
+
+function DischargeList({ title, items }: { title: string; items: string[] }) {
+  return (
+    <div className="mt-5">
+      <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-ink-soft">
+        {title}
+      </p>
+      <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-ink">
+        {items.map((it, i) => (
+          <li key={i}>{it}</li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

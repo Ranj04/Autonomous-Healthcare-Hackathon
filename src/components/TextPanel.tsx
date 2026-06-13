@@ -1,9 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { BillAnalysis, BillParse, DocType } from "@/lib/types";
+import type {
+  BillAnalysis,
+  BillParse,
+  DischargeParse,
+  DocType,
+  MedSchedule,
+} from "@/lib/types";
 import { runDraftAppeal } from "@/lib/appeal-client";
-import type { AppealState } from "@/components/VoicePanel";
+import { runGenerateSummary } from "@/lib/summary-client";
+import type { AppealState, SummaryState } from "@/components/VoicePanel";
 
 type Turn = { role: "user" | "agent"; text: string };
 
@@ -36,16 +43,19 @@ export default function TextPanel({
   docType,
   parse,
   analysis,
-  disputedIds,
+  disputedIds = [],
   onMarkDisputed,
   onAppeal,
+  onSummary,
 }: {
   docType: DocType;
-  parse: BillParse;
-  analysis: BillAnalysis;
-  disputedIds: number[];
-  onMarkDisputed: (lineId: number) => void;
-  onAppeal: (state: AppealState) => void;
+  parse: BillParse | DischargeParse;
+  analysis?: BillAnalysis;
+  schedule?: MedSchedule;
+  disputedIds?: number[];
+  onMarkDisputed?: (lineId: number) => void;
+  onAppeal?: (state: AppealState) => void;
+  onSummary?: (state: SummaryState) => void;
 }) {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [draft, setDraft] = useState("");
@@ -80,18 +90,19 @@ export default function TextPanel({
     } catch {}
 
     if (fc.name === "mark_disputed" && typeof args.line_id === "number") {
-      onMarkDisputed(args.line_id);
+      onMarkDisputed?.(args.line_id);
       if (!disputedIdsRef.current.includes(args.line_id)) {
         disputedIdsRef.current = [...disputedIdsRef.current, args.line_id];
       }
       return { ok: true, line_id: args.line_id, status: "marked_disputed" };
     }
-    if (fc.name === "draft_appeal") {
+    if (fc.name === "draft_appeal" && analysis && onAppeal) {
+      const bill = parse as BillParse;
       runDraftAppeal({
         analysis,
-        service_date: parse.service_date,
+        service_date: bill.service_date,
         disputedIds: disputedIdsRef.current,
-        patient_name: parse.patient_name,
+        patient_name: bill.patient_name,
         onAppeal,
       }); // async; the letter renders on screen when ready
       return {
@@ -99,6 +110,15 @@ export default function TextPanel({
         status: "drafting",
         message:
           "The appeal letter is being prepared and will appear on the patient's screen.",
+      };
+    }
+    if (fc.name === "generate_summary" && onSummary) {
+      runGenerateSummary({ parse: parse as DischargeParse, onSummary }); // async
+      return {
+        ok: true,
+        status: "drafting",
+        message:
+          "The medication schedule and questions are being prepared and will appear on the patient's screen.",
       };
     }
     return { ok: false, error: `tool ${fc.name} not available` };
@@ -178,8 +198,9 @@ export default function TextPanel({
       <div ref={scrollRef} className="mt-4 max-h-72 space-y-3 overflow-y-auto">
         {turns.length === 0 ? (
           <p className="font-mono text-xs leading-relaxed text-ink-soft">
-            Ask anything about your bill — e.g. “Why is the CT scan so expensive?”
-            or “Walk me through my bill.”
+            {docType === "bill"
+              ? "Ask anything about your bill — e.g. “Why is the CT scan so expensive?” or “Walk me through my bill.”"
+              : "Ask anything about your discharge instructions — e.g. “When do I take my antibiotic?” or “Make me a schedule and questions for my doctor.”"}
           </p>
         ) : (
           turns.map((turn, i) => (
@@ -224,8 +245,8 @@ export default function TextPanel({
         </p>
       )}
 
-      {/* Disputed lines — same shared state the voice panel shows */}
-      {disputedIds.length > 0 && (
+      {/* Disputed lines — same shared state the voice panel shows (bill only) */}
+      {analysis && disputedIds.length > 0 && (
         <div className="mt-5 border-t border-line pt-4">
           <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent-deep">
             Marked as not recalled ({disputedIds.length})
