@@ -1,0 +1,39 @@
+{
+  "discharge1": {
+    "diagnosis": "Community-acquired pneumonia (right lower lobe)",
+    "medications": [
+      {
+        "name": "Amoxicillin-clavulanate 875 mg/125 mg",
+        "frequency_per_day": 2,
+        "duration": "7 days"
+      },
+      {
+        "name": "Acetaminophen 500 mg",
+        "frequency_per_day": 4,
+        "duration": "as needed"
+      },
+      {
+        "name": "Albuterol inhaler",
+        "frequency_per_day": 4,
+        "duration": "as needed"
+      }
+    ],
+    "expected_med_count": 3,
+    "follow_ups": [
+      "See your primary care provider within 3-5 days.",
+      "Repeat chest X-ray in 6 weeks if symptoms persist."
+    ],
+    "warning_signs": [
+      "Shortness of breath that is getting worse or trouble breathing",
+      "Fever above 102.5\u00b0F (39.2\u00b0C) lasting more than 2 days",
+      "Chest pain",
+      "Coughing up blood",
+      "Confusion or unusual drowsiness"
+    ],
+    "activity_restrictions": [
+      "Rest and drink plenty of fluids.",
+      "No strenuous activity for 1 week.",
+      "Do not smoke; avoid secondhand smoke."
+    ]
+  }
+}

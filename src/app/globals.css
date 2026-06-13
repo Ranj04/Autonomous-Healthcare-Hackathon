@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+:root {
+  /* Archival case-file palette: bone paper, ink, vermilion signal. */
+  --paper: #f3ece0;
+  --paper-raised: #faf6ee;
+  --ink: #211c18;
+  --ink-soft: #6b6258;
+  --line: #d8cdbb;
+  --accent: #cf4520; /* vermilion — action / flagged */
+  --accent-deep: #a8350f;
+  --seal: #1f5d4c; /* forest green — fair / positive */
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-raised: var(--paper-raised);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-deep: var(--accent-deep);
+  --color-seal: var(--seal);
+  --font-display: var(--font-fraunces);
+  --font-mono: var(--font-plex-mono);
+}
+
+body {
+  color: var(--ink);
+  font-family: var(--font-fraunces), Georgia, serif;
+  /* Atmosphere: warm radial glow over faint ruled-paper grid. */
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(
+      ellipse 120% 80% at 50% -10%,
+      rgba(207, 69, 32, 0.07),
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 90% 60% at 90% 110%,
+      rgba(31, 93, 76, 0.06),
+      transparent 55%
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 33px,
+      rgba(33, 28, 24, 0.035) 34px
+    );
+}
+
+/* Staggered page-load reveal */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rise {
+  opacity: 0;
+  animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise {
+    animation: none;
+    opacity: 1;
+  }
+}

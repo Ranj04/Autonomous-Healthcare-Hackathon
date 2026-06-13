@@ -1,0 +1,182 @@
+[
+  {
+    "cpt": "99213",
+    "description": "Office visit, established patient, low complexity",
+    "fair_price_usd": {
+      "low": 90,
+      "median": 130,
+      "high": 200
+    }
+  },
+  {
+    "cpt": "99214",
+    "description": "Office visit, established patient, moderate complexity",
+    "fair_price_usd": {
+      "low": 130,
+      "median": 180,
+      "high": 270
+    }
+  },
+  {
+    "cpt": "99203",
+    "description": "Office visit, new patient, low complexity",
+    "fair_price_usd": {
+      "low": 110,
+      "median": 170,
+      "high": 250
+    }
+  },
+  {
+    "cpt": "99283",
+    "description": "Emergency dept visit, moderate severity",
+    "fair_price_usd": {
+      "low": 350,
+      "median": 550,
+      "high": 900
+    }
+  },
+  {
+    "cpt": "99284",
+    "description": "Emergency dept visit, high severity",
+    "fair_price_usd": {
+      "low": 600,
+      "median": 900,
+      "high": 1400
+    }
+  },
+  {
+    "cpt": "99285",
+    "description": "Emergency dept visit, highest severity",
+    "fair_price_usd": {
+      "low": 900,
+      "median": 1400,
+      "high": 2200
+    }
+  },
+  {
+    "cpt": "71046",
+    "description": "Chest X-ray, 2 views",
+    "fair_price_usd": {
+      "low": 50,
+      "median": 100,
+      "high": 220
+    }
+  },
+  {
+    "cpt": "70450",
+    "description": "CT head/brain without contrast",
+    "fair_price_usd": {
+      "low": 300,
+      "median": 600,
+      "high": 1200
+    }
+  },
+  {
+    "cpt": "72148",
+    "description": "MRI lumbar spine without contrast",
+    "fair_price_usd": {
+      "low": 400,
+      "median": 900,
+      "high": 1800
+    }
+  },
+  {
+    "cpt": "73721",
+    "description": "MRI lower extremity joint without contrast",
+    "fair_price_usd": {
+      "low": 400,
+      "median": 900,
+      "high": 1800
+    }
+  },
+  {
+    "cpt": "74176",
+    "description": "CT abdomen and pelvis without contrast",
+    "fair_price_usd": {
+      "low": 350,
+      "median": 700,
+      "high": 1400
+    }
+  },
+  {
+    "cpt": "80053",
+    "description": "Comprehensive metabolic panel",
+    "fair_price_usd": {
+      "low": 15,
+      "median": 30,
+      "high": 80
+    }
+  },
+  {
+    "cpt": "85025",
+    "description": "Complete blood count (CBC) with differential",
+    "fair_price_usd": {
+      "low": 12,
+      "median": 25,
+      "high": 60
+    }
+  },
+  {
+    "cpt": "81001",
+    "description": "Urinalysis, automated with microscopy",
+    "fair_price_usd": {
+      "low": 8,
+      "median": 15,
+      "high": 40
+    }
+  },
+  {
+    "cpt": "36415",
+    "description": "Routine venipuncture (blood draw)",
+    "fair_price_usd": {
+      "low": 3,
+      "median": 10,
+      "high": 25
+    }
+  },
+  {
+    "cpt": "93000",
+    "description": "Electrocardiogram (ECG) with interpretation",
+    "fair_price_usd": {
+      "low": 30,
+      "median": 60,
+      "high": 130
+    }
+  },
+  {
+    "cpt": "87635",
+    "description": "SARS-CoV-2 (COVID-19) PCR test",
+    "fair_price_usd": {
+      "low": 50,
+      "median": 100,
+      "high": 150
+    }
+  },
+  {
+    "cpt": "96372",
+    "description": "Therapeutic injection, subcutaneous/intramuscular",
+    "fair_price_usd": {
+      "low": 25,
+      "median": 50,
+      "high": 120
+    }
+  },
+  {
+    "cpt": "90471",
+    "description": "Immunization administration",
+    "fair_price_usd": {
+      "low": 20,
+      "median": 30,
+      "high": 60
+    }
+  },
+  {
+    "cpt": "99396",
+    "description": "Preventive visit, established patient, age 40-64",
+    "fair_price_usd": {
+      "low": 150,
+      "median": 250,
+      "high": 400
+    }
+  }
+]

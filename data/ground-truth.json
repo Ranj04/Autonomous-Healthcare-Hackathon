@@ -1,0 +1,104 @@
+{
+  "bill1_er": {
+    "service_date": "2026-05-28",
+    "line_items": [
+      {
+        "cpt": "99285",
+        "description": "Emergency dept visit, highest severity",
+        "billed": 2800.0
+      },
+      {
+        "cpt": "70450",
+        "description": "CT head/brain without contrast",
+        "billed": 1400.0
+      },
+      {
+        "cpt": "80053",
+        "description": "Comprehensive metabolic panel",
+        "billed": 280.0
+      },
+      {
+        "cpt": "85025",
+        "description": "CBC with differential",
+        "billed": 190.0
+      },
+      {
+        "cpt": "36415",
+        "description": "Routine venipuncture (blood draw)",
+        "billed": 30.0
+      }
+    ],
+    "expected_flags": [
+      "99285",
+      "70450",
+      "80053",
+      "85025",
+      "36415"
+    ],
+    "expected_total_billed": 4700.0,
+    "expected_overcharge_vs_high": 1135.0
+  },
+  "bill2_mri": {
+    "service_date": "2026-06-02",
+    "line_items": [
+      {
+        "cpt": "72148",
+        "description": "MRI lumbar spine without contrast",
+        "billed": 3400.0
+      },
+      {
+        "cpt": "99203",
+        "description": "Office visit, new patient, low complexity",
+        "billed": 240.0
+      },
+      {
+        "cpt": "36415",
+        "description": "Routine venipuncture (blood draw)",
+        "billed": 20.0
+      }
+    ],
+    "expected_flags": [
+      "72148"
+    ],
+    "expected_total_billed": 3660.0,
+    "expected_overcharge_vs_high": 1600.0
+  },
+  "bill3_office": {
+    "service_date": "2026-06-05",
+    "line_items": [
+      {
+        "cpt": "99214",
+        "description": "Office visit, established patient, moderate complexity",
+        "billed": 220.0
+      },
+      {
+        "cpt": "80053",
+        "description": "Comprehensive metabolic panel",
+        "billed": 150.0
+      },
+      {
+        "cpt": "85025",
+        "description": "CBC with differential",
+        "billed": 95.0
+      },
+      {
+        "cpt": "81001",
+        "description": "Urinalysis, automated with microscopy",
+        "billed": 60.0
+      },
+      {
+        "cpt": "36415",
+        "description": "Routine venipuncture (blood draw)",
+        "billed": 35.0
+      }
+    ],
+    "expected_flags": [
+      "80053",
+      "85025",
+      "81001",
+      "36415"
+    ],
+    "expected_total_billed": 560.0,
+    "expected_overcharge_vs_high": 135.0
+  }
+}
