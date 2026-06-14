@@ -37,6 +37,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${fraunces.variable} ${plexMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       {/* overflow-x-clip backstops the off-canvas How-it-works panel/tab so it
           can't create a sideways scroll on mobile (desktop has no h-scroll). */}

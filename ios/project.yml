@@ -1,0 +1,44 @@
+name: PaperworkAdvocate
+options:
+  bundleIdPrefix: com.paperworkadvocate
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+
+targets:
+  PaperworkAdvocate:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: Sources
+      - path: Resources
+    # XcodeGen generates a complete Info.plist from these properties.
+    info:
+      path: Sources/Info.plist
+      properties:
+        CFBundleDisplayName: Paperwork Advocate
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        NSMicrophoneUsageDescription: "Used so you can talk to your billing assistant."
+        NSCameraUsageDescription: "Used to upload a photo of your bill."
+        NSPhotoLibraryUsageDescription: "Used to upload a photo of your bill."
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.paperworkadvocate.app
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SWIFT_VERSION: "5.0"
+        ENABLE_USER_SCRIPT_SANDBOXING: YES

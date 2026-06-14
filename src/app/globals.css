@@ -28,8 +28,25 @@
 body {
   color: var(--ink);
   font-family: var(--font-fraunces), Georgia, serif;
-  /* Atmosphere: warm radial glow over faint ruled-paper grid. */
+  /* Ruled-paper grid scrolls with the page and tiles seamlessly at any height. */
   background-color: var(--paper);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 33px,
+    rgba(33, 28, 24, 0.035) 34px
+  );
+}
+
+/* Atmosphere: warm + forest radial glows pinned to the viewport so they never
+   stretch, repeat, or seam as the page grows taller. Sits behind all content
+   (negative z-index) but above the body's ruled-paper background. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
   background-image:
     radial-gradient(
       ellipse 120% 80% at 50% -10%,
@@ -40,12 +57,6 @@ body {
       ellipse 90% 60% at 90% 110%,
       rgba(31, 93, 76, 0.06),
       transparent 55%
-    ),
-    repeating-linear-gradient(
-      to bottom,
-      transparent,
-      transparent 33px,
-      rgba(33, 28, 24, 0.035) 34px
     );
 }
 
@@ -70,5 +81,75 @@ body {
   .rise {
     animation: none;
     opacity: 1;
+  }
+}
+
+/* ----- Voice orb: continuous, audio-independent motion (level reactivity is
+   driven separately via the --lvl custom property in JS). ----- */
+@keyframes orb-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.035);
+  }
+}
+
+@keyframes orb-drift-a {
+  0% {
+    transform: translate(-9%, -7%) scale(1);
+  }
+  50% {
+    transform: translate(11%, 9%) scale(1.18);
+  }
+  100% {
+    transform: translate(-9%, -7%) scale(1);
+  }
+}
+
+@keyframes orb-drift-b {
+  0% {
+    transform: translate(10%, 8%) scale(1.12);
+  }
+  50% {
+    transform: translate(-11%, -10%) scale(0.92);
+  }
+  100% {
+    transform: translate(10%, 8%) scale(1.12);
+  }
+}
+
+@keyframes orb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Orb animation classes (kept as classes, not inline, so prefers-reduced-motion
+   can switch them off). Amplitude reactivity stays in JS via --lvl / --spk. */
+.orb-breathe {
+  animation: orb-breathe 6s ease-in-out infinite;
+}
+.orb-spin-slow {
+  animation: orb-spin 24s linear infinite;
+}
+.orb-blob-a {
+  animation: orb-drift-a 7s ease-in-out infinite;
+}
+.orb-blob-b {
+  animation: orb-drift-b 9s ease-in-out infinite;
+}
+.orb-blob-c {
+  animation: orb-drift-b 12s ease-in-out infinite reverse;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orb-breathe,
+  .orb-spin-slow,
+  .orb-blob-a,
+  .orb-blob-b,
+  .orb-blob-c {
+    animation: none !important;
   }
 }

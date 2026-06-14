@@ -13,7 +13,12 @@ import {
   VOICE_MODEL,
   VOICE_NAME,
 } from "@/lib/voice-context";
-import { floatToPcm16Base64, PcmPlayer, SAMPLE_RATE } from "@/lib/audio";
+import {
+  floatToPcm16Base64,
+  PcmPlayer,
+  resampleTo24k,
+  SAMPLE_RATE,
+} from "@/lib/audio";
 import { runDraftAppeal } from "@/lib/appeal-client";
 import { runGenerateSummary } from "@/lib/summary-client";
 
@@ -35,6 +40,196 @@ function MicIcon({ className }: { className?: string }) {
       <path d="M3 8a5 5 0 0 0 10 0" />
       <path d="M8 13v2" />
     </svg>
+  );
+}
+
+// An ethereal voice orb: a translucent glass sphere with a slow rotating aurora
+// and drifting blooms inside, wrapped in a soft glowing halo. It always breathes
+// (CSS), and its live intensity tracks the agent's amplitude through two custom
+// properties updated per frame in rAF — no React re-renders:
+//   --lvl  smoothed 0..1 loudness (fast attack / slow decay) → scale + glow
+//   --spk  0..1 "is clearly speaking" → extra brightness/warmth (speaking state)
+// The breathing animation lives on a parent wrapper and the amplitude scale on a
+// child, so they compose instead of fighting over `transform`.
+function AgentOrb({
+  getLevel,
+  listening,
+}: {
+  getLevel: () => number;
+  listening: boolean;
+}) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const listeningRef = useRef(listening);
+  useEffect(() => {
+    listeningRef.current = listening;
+  }, [listening]);
+
+  useEffect(() => {
+    const reduce =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
+
+    let raf = 0;
+    let smooth = 0;
+    let phase = 0;
+    const tick = () => {
+      phase += 0.02;
+      const raw = getLevel();
+      // Fast attack, slow decay → a natural voice envelope (breath, not a meter).
+      smooth += (raw - smooth) * (raw > smooth ? 0.45 : 0.08);
+
+      // Gentle idle shimmer so the orb is alive in silence; held calmer while
+      // the user is speaking (listening state) rather than reacting to room noise.
+      const idleBase = listeningRef.current ? 0.05 : 0.07;
+      const idleSwing = listeningRef.current ? 0.015 : 0.035;
+      const idle = idleBase + Math.sin(phase) * idleSwing;
+
+      let lvl = Math.max(idle, smooth);
+      // "Speaking" once clearly above the idle floor → brighten/warm the orb.
+      let spk = Math.max(0, Math.min(1, (smooth - 0.08) * 2.4));
+
+      // Reduced motion: keep only a gentle, minimal pulse.
+      if (reduce) {
+        lvl = Math.min(lvl, 0.12);
+        spk *= 0.35;
+      }
+
+      const el = rootRef.current;
+      if (el) {
+        el.style.setProperty("--lvl", lvl.toFixed(3));
+        el.style.setProperty("--spk", spk.toFixed(3));
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [getLevel]);
+
+  return (
+    <div className="my-7 flex justify-center">
+      <div
+        ref={rootRef}
+        className="relative h-36 w-36"
+        style={{ ["--lvl" as string]: 0, ["--spk" as string]: 0 } as React.CSSProperties}
+      >
+        {/* Outer bloom / halo — grows and brightens with the agent's voice */}
+        <div
+          className="absolute inset-[-34%] rounded-full"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(207,69,32,0.55) 0%, rgba(207,69,32,0.18) 42%, rgba(207,69,32,0) 68%)",
+            filter: "blur(26px)",
+            opacity: "calc(0.16 + var(--lvl) * 0.6 + var(--spk) * 0.22)",
+            transform: "scale(calc(1 + var(--lvl) * 0.5))",
+            willChange: "transform, opacity",
+          }}
+        />
+
+        {/* Breathing wrapper (CSS animation) — separate element from the
+            amplitude scale so the two transforms compose, not collide. */}
+        <div className="orb-breathe absolute inset-0">
+          {/* Amplitude scale wrapper */}
+          <div
+            className="absolute inset-0"
+            style={{
+              transform: "scale(calc(1 + var(--lvl) * 0.2))",
+              willChange: "transform",
+            }}
+          >
+            {/* Glass sphere */}
+            <div
+              className="absolute inset-0 overflow-hidden rounded-full"
+              style={{
+                background:
+                  "radial-gradient(circle at 36% 28%, #fff0dc 0%, #f0935f 40%, #c5481f 74%, #8f2c0c 100%)",
+                boxShadow:
+                  "0 22px 55px -12px rgba(168,53,15,0.55), inset 0 0 36px rgba(255,224,190,0.4), inset 0 -18px 34px rgba(110,26,6,0.55)",
+                filter:
+                  "saturate(calc(1 + var(--spk) * 0.5)) brightness(calc(1 + var(--spk) * 0.22))",
+              }}
+            >
+              {/* Slow rotating aurora — the ethereal swirl */}
+              <div
+                className="orb-spin-slow absolute inset-[-25%]"
+                style={{
+                  mixBlendMode: "screen",
+                  filter: "blur(14px)",
+                  opacity: "calc(0.3 + var(--lvl) * 0.4 + var(--spk) * 0.3)",
+                  background:
+                    "conic-gradient(from 0deg, rgba(255,211,107,0.0), rgba(255,211,107,0.7), rgba(54,169,138,0.55), rgba(255,138,92,0.7), rgba(255,211,107,0.0))",
+                }}
+              />
+
+              {/* Drifting blooms (iridescence) */}
+              <div
+                className="absolute inset-0"
+                style={{
+                  mixBlendMode: "screen",
+                  filter: "blur(11px)",
+                  opacity: "calc(0.38 + var(--lvl) * 0.5)",
+                }}
+              >
+                <div
+                  className="orb-blob-a absolute inset-0"
+                  style={{
+                    background:
+                      "radial-gradient(42% 42% at 38% 34%, #ffd36b, transparent 70%)",
+                  }}
+                />
+                <div
+                  className="orb-blob-b absolute inset-0"
+                  style={{
+                    background:
+                      "radial-gradient(46% 46% at 62% 64%, #36a98a, transparent 70%)",
+                  }}
+                />
+                <div
+                  className="orb-blob-c absolute inset-0"
+                  style={{
+                    background:
+                      "radial-gradient(40% 40% at 64% 30%, #ff8a5c, transparent 72%)",
+                  }}
+                />
+              </div>
+
+              {/* Inner core glow — flares with the speaking level */}
+              <div
+                className="absolute inset-[18%] rounded-full"
+                style={{
+                  background:
+                    "radial-gradient(circle, rgba(255,240,214,0.95), rgba(255,200,150,0.25) 55%, transparent 72%)",
+                  filter: "blur(6px)",
+                  opacity: "calc(0.25 + var(--spk) * 0.7)",
+                  transform: "scale(calc(0.85 + var(--lvl) * 0.4))",
+                  willChange: "transform, opacity",
+                }}
+              />
+
+              {/* Specular highlight */}
+              <div
+                className="absolute left-[24%] top-[16%] h-1/4 w-1/3 rounded-full"
+                style={{
+                  background:
+                    "radial-gradient(circle, rgba(255,255,255,0.92), transparent 70%)",
+                  filter: "blur(5px)",
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Listening rim: a soft cool halo while the USER is speaking — a
+            distinct, calmer shimmer vs. the warm speaking pulse. */}
+        <div
+          className="pointer-events-none absolute inset-[-6%] rounded-full transition-opacity duration-300"
+          style={{
+            opacity: listening ? 1 : 0,
+            boxShadow:
+              "0 0 0 2px rgba(31,93,76,0.28), 0 0 26px rgba(31,93,76,0.3)",
+          }}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -271,9 +466,15 @@ export default function VoicePanel({
       const processor = ctx.createScriptProcessor(4096, 1, 1);
       processor.onaudioprocess = (e) => {
         if (!sendingRef.current) return;
+        // iOS/Safari may run the mic at 48kHz despite the 24kHz request, so
+        // downsample to what the realtime session expects.
+        const frame = resampleTo24k(
+          e.inputBuffer.getChannelData(0),
+          e.inputBuffer.sampleRate,
+        );
         send({
           type: "input_audio_buffer.append",
-          audio: floatToPcm16Base64(e.inputBuffer.getChannelData(0)),
+          audio: floatToPcm16Base64(frame),
         });
       };
       source.connect(processor);
@@ -316,6 +517,7 @@ export default function VoicePanel({
   }, []);
 
   const disputedSet = new Set(disputedIds);
+  const getLevel = useCallback(() => playerRef.current?.level() ?? 0, []);
 
   return (
     <div className="rise mt-6 border border-line bg-paper-raised p-6">
@@ -345,6 +547,8 @@ export default function VoicePanel({
           {status === "connecting" ? "Connecting…" : "Connect voice agent"}
         </button>
       ) : (
+        <>
+        <AgentOrb getLevel={getLevel} listening={talking} />
         <button
           onPointerDown={(e) => {
             e.preventDefault();
@@ -360,6 +564,7 @@ export default function VoicePanel({
           <MicIcon className="h-3.5 w-3.5 shrink-0 opacity-90" />
           {talking ? "● Listening — release to send" : "Hold to talk"}
         </button>
+        </>
       )}
 
       {error && (
